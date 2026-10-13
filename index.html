@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NexusToe - Advanced Interactive Tic-Tac-Toe Web Application with Unbeatable AI (Minimax Algorithm), Local 2-Player Mode, Move History, Audio Synthesis, and Dynamic Animations. Developed for Prodigy InfoTech Task 03.">
+    <title>NexusToe &bull; Advanced Tic-Tac-Toe Web App | Prodigy InfoTech Task 03</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Ambient Glowing Background Accents -->
+    <div class="ambient-glow glow-top-left" aria-hidden="true"></div>
+    <div class="ambient-glow glow-bottom-right" aria-hidden="true"></div>
+    <div class="ambient-glow glow-center" aria-hidden="true"></div>
+
+    <!-- Canvas for Victory Confetti -->
+    <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+
+    <!-- Main Container -->
+    <div class="app-layout">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand-group">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-gamepad"></i>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-name">Nexus<span class="gradient-text">Toe</span></h1>
+                    <span class="task-badge"><i class="fa-solid fa-trophy"></i> Prodigy InfoTech &bull; Task 03</span>
+                </div>
+            </div>
+
+            <!-- Header Quick Actions -->
+            <div class="header-controls">
+                <button class="icon-btn" id="soundToggleBtn" title="Toggle Sound Feedback (Muted by default)" aria-label="Toggle Sound Effects">
+                    <i class="fa-solid fa-volume-xmark" id="soundIcon"></i>
+                </button>
+                <button class="icon-btn" id="historyToggleBtn" title="Toggle Move History Drawer" aria-label="Toggle Move History">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </button>
+                <button class="icon-btn" id="shortcutsModalBtn" title="Keyboard Shortcuts" aria-label="Keyboard Shortcuts">
+                    <i class="fa-solid fa-keyboard"></i>
+                </button>
+                <button class="icon-btn" id="howToPlayBtn" title="Rules & How to Play" aria-label="Game Rules">
+                    <i class="fa-solid fa-circle-question"></i>
+                </button>
+                <button class="icon-btn theme-toggle" id="themeToggleBtn" title="Switch Dark / Light Theme" aria-label="Switch Theme">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Mode & Difficulty Selector Bar -->
+        <section class="game-setup-bar">
+            <!-- Mode Switcher: PvP vs AI -->
+            <div class="segmented-control mode-selector" role="radiogroup" aria-label="Game Mode">
+                <button class="segmented-btn active" data-mode="ai" id="modeAiBtn" role="radio" aria-checked="true">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>vs AI Opponent</span>
+                </button>
+                <button class="segmented-btn" data-mode="pvp" id="modePvpBtn" role="radio" aria-checked="false">
+                    <i class="fa-solid fa-user-group"></i>
+                    <span>Player vs Player</span>
+                </button>
+            </div>
+
+            <!-- AI Difficulty Selector (Visible in AI Mode) -->
+            <div class="difficulty-control" id="difficultyGroup">
+                <label for="aiDifficultySelect" class="setup-label">
+                    <i class="fa-solid fa-brain"></i> AI Intelligence:
+                </label>
+                <div class="select-wrapper">
+                    <select id="aiDifficultySelect" aria-label="AI Difficulty Level">
+                        <option value="easy">Easy &bull; Casual Casual Moves</option>
+                        <option value="medium">Medium &bull; Tactical Blocks</option>
+                        <option value="hard" selected>Impossible &bull; Minimax Engine</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down select-caret"></i>
+                </div>
+            </div>
+
+            <!-- Player Marker Choice (Visible in AI Mode) -->
+            <div class="marker-control" id="markerChoiceGroup">
+                <span class="setup-label"><i class="fa-solid fa-shapes"></i> Your Side:</span>
+                <div class="marker-toggle-btns">
+                    <button class="marker-chip active" data-symbol="X" id="chooseXBtn" title="Play as X (Goes first)">
+                        <span class="symbol-x">X</span>
+                        <span class="chip-sub">1st Move</span>
+                    </button>
+                    <button class="marker-chip" data-symbol="O" id="chooseOBtn" title="Play as O (Goes second)">
+                        <span class="symbol-o">O</span>
+                        <span class="chip-sub">2nd Move</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Game Interface Grid -->
+        <main class="game-main-grid">
+            
+            <!-- Left Panel: Scoreboard & Player Cards -->
+            <aside class="panel-card players-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title"><i class="fa-solid fa-users"></i> Match Roster</h2>
+                    <button class="btn-text-ghost" id="editNamesBtn" title="Customize Player Names">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                </div>
+
+                <!-- Player 1 Card (X) -->
+                <div class="player-card active-turn" id="playerCardX">
+                    <div class="player-avatar avatar-x">
+                        <i class="fa-solid fa-user"></i>
+                        <span class="avatar-badge">X</span>
+                    </div>
+                    <div class="player-meta">
+                        <div class="player-name-row">
+                            <span class="player-display-name" id="nameDisplayX">Player 1</span>
+                            <span class="player-turn-indicator" id="turnTagX"><i class="fa-solid fa-bolt"></i> TURN</span>
+                        </div>
+                        <div class="player-score-row">
+                            <span class="score-label">Score</span>
+                            <span class="score-val score-x" id="scoreX">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Versus Divider -->
+                <div class="versus-divider">
+                    <span class="divider-line"></span>
+                    <span class="versus-pill">VS</span>
+                    <span class="divider-line"></span>
+                </div>
+
+                <!-- Player 2 / AI Card (O) -->
+                <div class="player-card" id="playerCardO">
+                    <div class="player-avatar avatar-o">
+                        <i class="fa-solid fa-robot" id="avatarIconO"></i>
+                        <span class="avatar-badge">O</span>
+                    </div>
+                    <div class="player-meta">
+                        <div class="player-name-row">
+                            <span class="player-display-name" id="nameDisplayO">AI Minimax</span>
+                            <span class="player-turn-indicator hidden" id="turnTagO"><i class="fa-solid fa-bolt"></i> TURN</span>
+                        </div>
+                        <div class="player-score-row">
+                            <span class="score-label">Score</span>
+                            <span class="score-val score-o" id="scoreO">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Match Metrics Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <span class="metric-icon"><i class="fa-solid fa-handshake"></i></span>
+                        <div class="metric-content">
+                            <span class="metric-number" id="tiesCount">0</span>
+                            <span class="metric-title">Ties / Draws</span>
+                        </div>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-icon"><i class="fa-solid fa-fire"></i></span>
+                        <div class="metric-content">
+                            <span class="metric-number" id="winStreakCount">0</span>
+                            <span class="metric-title">Win Streak</span>
+                        </div>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-icon"><i class="fa-solid fa-gamepad"></i></span>
+                        <div class="metric-content">
+                            <span class="metric-number" id="totalMatchesCount">0</span>
+                            <span class="metric-title">Total Games</span>
+                        </div>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                        <div class="metric-content">
+                            <span class="metric-number" id="winRatioPct">0%</span>
+                            <span class="metric-title">Win Rate</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reset Statistics Button -->
+                <button class="btn btn-outline btn-sm full-width" id="resetStatsBtn" title="Reset all scoreboard metrics">
+                    <i class="fa-solid fa-rotate-left"></i> Reset Scoreboard
+                </button>
+            </aside>
+
+            <!-- Center Arena: Game Board & Status Banner -->
+            <section class="game-arena-card">
+                
+                <!-- Status Banner -->
+                <div class="status-banner" id="statusBanner" role="status" aria-live="polite">
+                    <div class="status-pulse-dot" id="statusDot"></div>
+                    <span class="status-headline" id="statusHeadline">Player X's Turn</span>
+                    <span class="status-subtext" id="statusSubtext">Click any empty cell to place your marker</span>
+                </div>
+
+                <!-- AI Thinking Indicator (Floating overlay) -->
+                <div class="ai-thinking-overlay hidden" id="aiThinking">
+                    <div class="ai-thinking-spinner">
+                        <i class="fa-solid fa-brain fa-bounce"></i>
+                    </div>
+                    <span class="ai-thinking-text">Minimax calculating optimal path...</span>
+                </div>
+
+                <!-- The 3x3 Interactive Grid Arena -->
+                <div class="board-wrapper">
+                    <!-- SVG Overlay for animated strike-through win line -->
+                    <svg class="win-line-svg" id="winLineSvg" viewBox="0 0 360 360" aria-hidden="true">
+                        <line class="win-line" id="winLine" x1="0" y1="0" x2="0" y2="0"></line>
+                    </svg>
+
+                    <div class="tic-tac-board" id="board" role="grid" aria-label="Tic-Tac-Toe 3x3 Board">
+                        <!-- Cells with indexed data attributes (0 to 8) -->
+                        <button class="board-cell" data-index="0" role="gridcell" aria-label="Row 1, Column 1" id="cell-0">
+                            <span class="cell-key-hint">1</span>
+                            <span class="cell-symbol"></span>
+                        </button>
+                        <button class="board-cell" data-index="1" role="gridcell" aria-label="Row 1, Column 2" id="cell-1">
+                            <span class="cell-key-hint">2</span>
+                            <span class="cell-symbol"></span>
+                        </button>
+                        <button class="board-cell" data-index="2" role="gridcell" aria-label="Row 1, Column 3" id="cell-2">
+                            <span class="cell-key-hint">3</span>
+                            <span class="cell-symbol"></span>
+                        </button>
+
+                        <button class="board-cell" data-index="3" role="gridcell" aria-label="Row 2, Column 1" id="cell-3">
+                            <span class="cell-key-hint">4</span>
+                            <span class="cell-symbol"></span>
+                        </button>
+                        <button class="board-cell" data-index="4" role="gridcell" aria-label="Row 2, Column 2" id="cell-4">
+                            <span class="cell-key-hint">5</span>
+                            <span class="cell-symbol"></span>
+                        </button>
+                        <button class="board-cell" data-index="5" role="gridcell" aria-label="Row 2, Column 3" id="cell-5">
+                            <span class="cell-key-hint">6</span>
+                            <span class="cell-symbol"></span>
+                        </button>
+
+                        <button class="board-cell" data-index="6" role="gridcell" aria-label="Row 3, Column 1" id="cell-6">
+                            <span class="cell-key-hint">7</span>
+                            <span class="cell-symbol"></span>
+                        </button>
+                        <button class="board-cell" data-index="7" role="gridcell" aria-label="Row 3, Column 2" id="cell-7">
+                            <span class="cell-key-hint">8</span>
+                            <span class="cell-symbol"></span>
+                        </button>
+                        <button class="board-cell" data-index="8" role="gridcell" aria-label="Row 3, Column 3" id="cell-8">
+                            <span class="cell-key-hint">9</span>
+                            <span class="cell-symbol"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Controls Toolbar -->
+                <div class="action-controls-bar">
+                    <button class="btn btn-secondary" id="undoBtn" disabled title="Undo last move (Shortcut: U)">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span>Undo Move</span>
+                    </button>
+                    <button class="btn btn-primary" id="restartBtn" title="Restart this match (Shortcut: R)">
+                        <i class="fa-solid fa-arrow-rotate-right"></i>
+                        <span>Restart Match</span>
+                    </button>
+                    <button class="btn btn-accent" id="newGameBtn" title="Start fresh match series (Shortcut: N)">
+                        <i class="fa-solid fa-play"></i>
+                        <span>New Game</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Panel: Move History Drawer & Analytics -->
+            <aside class="panel-card history-panel" id="historyPanel">
+                <div class="panel-header">
+                    <h2 class="panel-title"><i class="fa-solid fa-list-ol"></i> Move Timeline</h2>
+                    <span class="step-count-pill" id="moveCounter">0 / 9 Moves</span>
+                </div>
+
+                <div class="history-scroll-area" id="moveList">
+                    <div class="history-empty" id="historyEmpty">
+                        <i class="fa-regular fa-chess-knight"></i>
+                        <p>No moves placed yet</p>
+                        <span>Cells clicked will be chronologically logged here</span>
+                    </div>
+                </div>
+
+                <!-- AI Algorithm Insight Box -->
+                <div class="ai-insight-box">
+                    <div class="insight-header">
+                        <i class="fa-solid fa-microchip"></i>
+                        <span>Minimax AI Engine</span>
+                    </div>
+                    <p class="insight-body" id="insightDesc">
+                        On <strong>Impossible</strong> mode, the AI explores all 9! permutations using recursive evaluation, guaranteeing an optimal defensive or winning response.
+                    </p>
+                </div>
+            </aside>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>Developed with <i class="fa-solid fa-heart heart-beat"></i> by <strong>Shoeb Tahsildar</strong> for <strong>Prodigy InfoTech</strong> &bull; Task 03</p>
+            <p class="footer-sub">Built using Semantic HTML5, Glassmorphism CSS3, Web Audio API, and Minimax AI Algorithm.</p>
+        </footer>
+
+    </div>
+
+    <!-- Edit Names Modal -->
+    <div class="modal-backdrop hidden" id="namesModal" role="dialog" aria-modal="true" aria-labelledby="namesModalTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title" id="namesModalTitle"><i class="fa-solid fa-user-pen"></i> Customize Player Names</h3>
+                <button class="modal-close-btn" id="closeNamesModalBtn" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="inputNameX"><span class="symbol-x font-bold">X</span> Player 1 Name:</label>
+                    <input type="text" id="inputNameX" maxlength="15" placeholder="Player 1" value="Player 1">
+                </div>
+                <div class="input-group">
+                    <label for="inputNameO"><span class="symbol-o font-bold">O</span> Player 2 / AI Name:</label>
+                    <input type="text" id="inputNameO" maxlength="15" placeholder="Player 2" value="AI Minimax">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelNamesBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveNamesBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="modal-backdrop hidden" id="shortcutsModal" role="dialog" aria-modal="true" aria-labelledby="shortcutsModalTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title" id="shortcutsModalTitle"><i class="fa-solid fa-keyboard"></i> Keyboard Controls</h3>
+                <button class="modal-close-btn" id="closeShortcutsModalBtn" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <ul class="shortcuts-list">
+                    <li>
+                        <span class="shortcut-desc">Mark Cell 1 to 9</span>
+                        <div class="key-combo"><kbd>1</kbd> - <kbd>9</kbd> / <kbd>Numpad</kbd></div>
+                    </li>
+                    <li>
+                        <span class="shortcut-desc">Restart Current Match</span>
+                        <div class="key-combo"><kbd>R</kbd></div>
+                    </li>
+                    <li>
+                        <span class="shortcut-desc">Undo Last Move</span>
+                        <div class="key-combo"><kbd>U</kbd></div>
+                    </li>
+                    <li>
+                        <span class="shortcut-desc">Toggle Sound Synthesizer</span>
+                        <div class="key-combo"><kbd>M</kbd></div>
+                    </li>
+                    <li>
+                        <span class="shortcut-desc">Toggle Dark / Light Theme</span>
+                        <div class="key-combo"><kbd>T</kbd></div>
+                    </li>
+                    <li>
+                        <span class="shortcut-desc">Switch Mode (PvP / AI)</span>
+                        <div class="key-combo"><kbd>S</kbd></div>
+                    </li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="dismissShortcutsBtn">Got It</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- How to Play & Rules Modal -->
+    <div class="modal-backdrop hidden" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesModalTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title" id="rulesModalTitle"><i class="fa-solid fa-book-open"></i> Rules & Game Engine</h3>
+                <button class="modal-close-btn" id="closeRulesModalBtn" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body rules-content">
+                <div class="rule-item">
+                    <div class="rule-icon"><i class="fa-solid fa-bullseye"></i></div>
+                    <div class="rule-desc">
+                        <h4>Objective</h4>
+                        <p>The goal is to align three of your markers (either horizontally, vertically, or diagonally) on the 3x3 grid before your opponent does.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-icon"><i class="fa-solid fa-arrows-split-up-and-left"></i></div>
+                    <div class="rule-desc">
+                        <h4>Game Modes</h4>
+                        <p><strong>vs AI Opponent:</strong> Test your wits against Easy, Medium, or the mathematically Unbeatable Minimax algorithm.<br>
+                        <strong>Player vs Player:</strong> Pass and play locally with customized player profiles and live turn indicators.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-icon"><i class="fa-solid fa-brain"></i></div>
+                    <div class="rule-desc">
+                        <h4>Minimax Algorithm</h4>
+                        <p>The AI simulates all future branches of the game tree. It assigns +10 for an AI win, -10 for a player win, and 0 for a tie, subtracting depth to favor quicker victories. It will never make a losing blunder!</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="dismissRulesBtn">Start Playing</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="script.js"></script>
+</body>
+</html>
